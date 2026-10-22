@@ -1,7 +1,7 @@
 {
   "name": "coauthoring",
   "version": "1.0.1",
-  "homepage": "https://www.onlyoffice.com",
+  "homepage": "https://github.com/rxbyes/DocumentServer",
   "private": true,
   "bin": {
     "docservice": "sources/server.js",

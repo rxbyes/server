@@ -1,7 +1,7 @@
 {
   "name": "metrics",
   "version": "1.0.0",
-  "homepage": "https://www.onlyoffice.com",
+  "homepage": "https://github.com/rxbyes/DocumentServer",
   "private": true,
   "bin": "node_modules/statsd/bin/statsd",
   "dependencies": {

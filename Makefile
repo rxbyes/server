@@ -7,7 +7,7 @@ PRODUCT_VERSION ?= 0.0.0
 BUILD_NUMBER ?= 0
 
 PUBLISHER_NAME ?= Ascensio System SIA
-PUBLISHER_URL ?= https://www.onlyoffice.com/
+PUBLISHER_URL ?= https://github.com/rxbyes/DocumentServer
 
 GRUNT_ENV += PRODUCT_VERSION=$(PRODUCT_VERSION)
 GRUNT_ENV += BUILD_NUMBER=$(BUILD_NUMBER)
