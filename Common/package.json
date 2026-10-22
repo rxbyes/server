@@ -1,7 +1,7 @@
 {
   "name": "common",
   "version": "1.0.1",
-  "homepage": "https://www.onlyoffice.com",
+  "homepage": "https://github.com/rxbyes/DocumentServer",
   "private": true,
   "dependencies": {
     "@aws-sdk/client-s3": "3.637.0",
