@@ -35,8 +35,11 @@
 
 'use strict';
 
+const fs = require('node:fs');
+const fsPromises = require('node:fs/promises');
 const {pipeline} = require('node:stream/promises');
 const express = require('express');
+const ms = require('ms');
 const config = require('config');
 const operationContext = require('./../../../Common/sources/operationContext');
 const tenantManager = require('./../../../Common/sources/tenantManager');
@@ -54,8 +57,45 @@ const cfgCacheStorage = config.get('storage');
 const cfgPersistentStorage = operationContext.normalizePersistentStorageCfg(cfgCacheStorage, config.get('persistentStorage'));
 const cfgForgottenFiles = config.get('services.CoAuthoring.server.forgottenfiles');
 const cfgErrorFiles = config.get('FileConverter.converter.errorfiles');
+const cfgTelemetryCustomer = process.env.DOCSERVICE_TELEMETRY_CUSTOMER ?? 'OA Docs';
 
 const router = express.Router();
+
+const apiJsRelativePath = 'apps/api/documents/api.js';
+const telemetryCustomerRe = /([?&]customer=)(?:\{\{APP_CUSTOMER_NAME\}\}|ONLYOFFICE)/g;
+
+function applyTelemetryCustomer(content) {
+  if (!cfgTelemetryCustomer) {
+    return content.replace(telemetryCustomerRe, '');
+  }
+  return content.replace(telemetryCustomerRe, (match, prefix) => prefix + encodeURIComponent(cfgTelemetryCustomer));
+}
+
+function createApiJsMiddleware(filePath, staticOptions) {
+  let cached = {mtimeMs: -1, content: ''};
+  return async (req, res) => {
+    try {
+      const fileStat = await fsPromises.stat(filePath);
+      if (fileStat.mtimeMs !== cached.mtimeMs) {
+        cached = {
+          mtimeMs: fileStat.mtimeMs,
+          content: applyTelemetryCustomer(await fsPromises.readFile(filePath, 'utf8'))
+        };
+      }
+      res.set('Content-Type', mime.getType(filePath));
+      const maxAge = staticOptions && staticOptions.maxAge;
+      if (maxAge) {
+        res.set('Cache-Control', `public, max-age=${ms(maxAge) / 1000}`);
+      }
+      res.send(cached.content);
+    } catch (err) {
+      operationContext.global.logger.error(err);
+      if (!res.headersSent) {
+        res.sendStatus(404);
+      }
+    }
+  };
+}
 
 function initCacheRouter(cfgStorage, routs, configKey) {
   const {storageFolderName} = cfgStorage;
@@ -167,6 +207,10 @@ function createCacheMiddleware(prefix, cfgStorage, rout, configKey) {
 
 for (const i in cfgStaticContent) {
   if (Object.hasOwn(cfgStaticContent, i)) {
+    const apiJsPath = path.join(cfgStaticContent[i]['path'], apiJsRelativePath);
+    if (fs.existsSync(apiJsPath)) {
+      router.get(path.posix.join(i, apiJsRelativePath), createApiJsMiddleware(apiJsPath, cfgStaticContent[i]['options']));
+    }
     router.use(i, express.static(cfgStaticContent[i]['path'], cfgStaticContent[i]['options']));
   }
 }
