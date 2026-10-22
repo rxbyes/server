@@ -415,13 +415,11 @@ async function readLicenseTenant(ctx, licenseFile, baseVerifiedLicense) {
       res.type = c_LR.NotBefore;
       ctx.logger.warn('License: License not active before start_date:%s.', startDate.toISOString());
     } else if (timeLimited) {
-      // Grace period after end license = limited mode with limited connections
+      // Grace period after end license.
+      // OA Docs fork: keep the full licensed quotas during grace (upstream clamped
+      // connections to LICENSE_CONNECTIONS=20 and users to LICENSE_USERS=3 here).
       if (res.endDate.setUTCDate(res.endDate.getUTCDate() + res.graceDays) >= checkDate) {
         res.type = c_LR.SuccessLimit;
-        res.connections = Math.min(res.connections, constants.LICENSE_CONNECTIONS);
-        res.connectionsView = Math.min(res.connectionsView, constants.LICENSE_CONNECTIONS);
-        res.usersCount = Math.min(res.usersCount, constants.LICENSE_USERS);
-        res.usersViewCount = Math.min(res.usersViewCount, constants.LICENSE_USERS);
         const errStr = res.usersCount ? `${res.usersCount} unique users` : `${res.connections} concurrent connections`;
         ctx.logger.error(
           `License: License needs to be renewed.\nYour users have only ${errStr} ` +

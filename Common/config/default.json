@@ -519,6 +519,11 @@
         "websocketMaxPayloadSize": "1.5MB",
         "maxChangesSize": "150MB"
       },
+      "community": {
+        "memoryGuard": {
+          "enabled": false
+        }
+      },
       "sockjs": {
         "sockjs_url": "",
         "disable_cors": true,

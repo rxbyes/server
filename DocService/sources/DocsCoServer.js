@@ -116,6 +116,10 @@ const util = require('util');
 
 const cfgEditSingleton = config.get('services.CoAuthoring.server.edit_singleton');
 const cfgEditor = config.get('services.CoAuthoring.editor');
+// OA Docs fork: community memory guard is opt-in; absent key means disabled.
+const cfgCommunityMemoryGuardEnabled =
+  config.has('services.CoAuthoring.community.memoryGuard.enabled') &&
+  config.get('services.CoAuthoring.community.memoryGuard.enabled');
 const cfgCallbackRequestTimeout = config.get('services.CoAuthoring.server.callbackRequestTimeout');
 //The waiting time to document assembly when all out(not 0 in case of F5 in the browser)
 const cfgAscSaveTimeOutDelay = config.get('services.CoAuthoring.server.savetimeoutdelay');
@@ -632,6 +636,11 @@ function modifyConnectionEditorToView(ctx, conn) {
   delete conn.coEditingMode;
 }
 function applyCommunityMemoryAdmission(ctx, conn, isLiveViewer) {
+  // OA Docs fork: community memory guard defaults to off; re-enable via
+  // services.CoAuthoring.community.memoryGuard.enabled when stability matters more than access.
+  if (!ctx.getCfg('services.CoAuthoring.community.memoryGuard.enabled', cfgCommunityMemoryGuardEnabled)) {
+    return;
+  }
   if (!runtimeProfile.isMemoryRuntime() || !conn.user || conn.user.view || isLiveViewer) {
     return;
   }
